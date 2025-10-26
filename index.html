@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Friends’ Choice!</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --card-w: 7.5rem; --card-h: 9.5rem; }
+    body { box-sizing: border-box; }
+    .slot-reel { animation: spin 2s ease-in-out; }
+    @keyframes spin { 0% { transform: translateY(0); } 50% { transform: translateY(-220px); } 100% { transform: translateY(0); } }
+    .slot-reveal { animation: spring-in 420ms ease-out both; }
+    @keyframes spring-in { 0% { opacity: 0; transform: translateY(8px) scale(0.85); filter: blur(2px);} 40% { opacity: 1; transform: translateY(0) scale(1.10); filter: blur(0);} 60% { transform: translateY(0) scale(0.97);} 80% { transform: translateY(0) scale(1.02);} 100% { transform: translateY(0) scale(1);} }
+    .slot-emoji-pair { display: flex; align-items: center; justify-content: center; gap: 0.25rem; }
+    .lever { transition: transform .2s ease; } .lever:active { transform: translateY(2px) scale(.98); }
+    .slot-card { width: var(--card-w); height: var(--card-h); }
+    .slot-header { height: 1.25rem; line-height: 1.25rem; }
+    .slot-emoji { font-size: 2.25rem; line-height: 1; display: block; }
+    .slot-label { font-size: .75rem; font-weight: 700; display: block; margin-top: .25rem; }
+    .qa-inner.blurred { filter: blur(6px); pointer-events: none; }
+    .qa-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 1rem; background: rgba(0,0,0,.35); color: #fff; font-weight: 800; cursor: pointer; user-select: none; }
+    .qa-overlay:hover { background: rgba(0,0,0,.45); }
+    .qa-overlay.hidden { display: none; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 flex items-center justify-center p-4">
+  <main class="w-full max-w-3xl text-center">
+    <h1 class="text-4xl font-extrabold text-white mb-4 drop-shadow">🎰 Friends’ Choice! 🎰</h1>
+    <p class="text-indigo-100 mb-6">Press <kbd class="px-1.5 py-0.5 bg-white/20 rounded">Space</kbd> or click Start. A sentence will be built with <span class="font-semibold">because</span>.</p>
+
+    <section class="slot-machine bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-3xl p-6 md:p-8 mb-6 border-8 border-yellow-300 shadow-2xl">
+      <div class="flex justify-center gap-3 md:gap-4 mb-5">
+        <div class="bg-white rounded-xl p-3 slot-card flex flex-col items-center justify-center border-4 border-gray-300 overflow-hidden shadow">
+          <div class="text-[11px] text-gray-600 mb-2 font-semibold slot-header">Friend</div>
+          <div id="student-slot" class="text-center leading-tight"><div class="slot-content"><span class="slot-emoji">?</span><span class="slot-label">&nbsp;</span></div></div>
+        </div>
+        <div class="bg-white rounded-xl p-3 slot-card flex flex-col items-center justify-center border-4 border-gray-300 overflow-hidden shadow">
+          <div class="text-[11px] text-gray-600 mb-2 font-semibold slot-header">Want?</div>
+          <div id="attitude-slot" class="text-center leading-tight"><div class="slot-content"><span class="slot-emoji">?</span><span class="slot-label">&nbsp;</span></div></div>
+        </div>
+        <div class="bg-white rounded-xl p-3 slot-card flex flex-col items-center justify-center border-4 border-gray-300 overflow-hidden shadow">
+          <div class="text-[11px] text-gray-600 mb-2 font-semibold slot-header">Activity</div>
+          <div id="activity-slot" class="text-center leading-tight"><div class="slot-content"><span class="slot-emoji">?</span><span class="slot-label">&nbsp;</span></div></div>
+        </div>
+        <div class="bg-white rounded-xl p-3 slot-card flex flex-col items-center justify-center border-4 border-gray-300 overflow-hidden shadow">
+          <div class="text-[11px] text-gray-600 mb-2 font-semibold slot-header">Why?</div>
+          <div id="reason-slot" class="text-center leading-tight"><div class="slot-content"><span class="slot-emoji">?</span><span class="slot-label">&nbsp;</span></div></div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <button id="spin-btn" class="lever bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-full text-lg shadow-lg active:scale-95">🎰 Start!</button>
+      </div>
+    </section>
+
+    <section class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/20 shadow-lg mt-2 space-y-4">
+      <div class="relative">
+        <h2 class="text-white font-semibold mb-1">Question</h2>
+        <div id="qa-q-inner" class="qa-inner blurred">
+          <div class="flex items-center gap-3">
+            <p id="question" class="flex-1 text-xl md:text-2xl text-white/90 font-semibold min-h-[2rem]"></p>
+            <button id="speak-q" class="shrink-0 px-3 py-2 rounded-full bg-white/80 hover:bg-white text-indigo-900 font-bold shadow" disabled>🔊</button>
+          </div>
+        </div>
+        <div id="qa-q-overlay" class="qa-overlay">💡 Tips for you</div>
+      </div>
+      <div class="relative">
+        <h2 class="text-white font-semibold mb-1">Answer</h2>
+        <div id="qa-a-inner" class="qa-inner blurred">
+          <div class="flex items-center gap-3">
+            <p id="answer" class="flex-1 text-xl md:text-2xl text-white/95 font-semibold min-h-[2.5rem]"></p>
+            <button id="speak-a" class="shrink-0 px-3 py-2 rounded-full bg-white/80 hover:bg-white text-indigo-900 font-bold shadow" disabled>🔊</button>
+          </div>
+        </div>
+        <div id="qa-a-overlay" class="qa-overlay">💡 Tips for you</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const students = [
+      { emoji: '👨🏻', name: 'Ken', gender: 'he' },
+      { emoji: '👩🏻', name: 'Jessica', gender: 'she' },
+      { emoji: '👩🏻', name: 'Sam', gender: 'she' },
+      { emoji: '👨🏿', name: 'Ronan', gender: 'he' },
+      { emoji: '👨🏻', name: 'Brave', gender: 'he' },
+      { emoji: '👨🏻', name: 'Bravo', gender: 'he' },
+      { emoji: '👨🏻', name: 'Max', gender: 'he' },
+      { emoji: '👨🏻', name: 'Kaeden', gender: 'he' },
+      { emoji: '👩🏻', name: 'Charlie', gender: 'she' },
+      { emoji: '👩🏻', name: 'Phoebe', gender: 'she' },
+      { emoji: '👨🏻', name: 'Connor', gender: 'he' },
+      { emoji: '👨🏿', name: 'Darius', gender: 'he' },
+      { emoji: '👩🏻', name: 'Amy', gender: 'she' },
+      { emoji: '👩🏻', name: 'Wendy', gender: 'she' },
+      { emoji: '👨🏻', name: 'Jamie', gender: 'he' },
+      { emoji: '👩🏻', name: 'Hattie', gender: 'she' },
+      { emoji: '👩🏻‍🦱', name: 'Celia', gender: 'she' },
+      { emoji: '👨🏻', name: 'Toto', gender: 'he' },
+      { emoji: '👩🏻‍🦱', name: 'Karen', gender: 'she' },
+      { emoji: '👩🏻', name: 'Dorothy', gender: 'she' },
+      { emoji: '👨🏻‍🤓', name: 'Chance', gender: 'he' },
+      { emoji: '👩🏻‍🏫', name: 'Miss Fan', gender: 'she' }
+    ];
+
+    const attitudes = [
+      { emoji: '😊', text: 'Yes' },
+      { emoji: '😤', text: 'No' }
+    ];
+
+    const activities = [
+      { emoji: '🏖️', key: 'beach', label: 'go to the beach' },
+      { emoji: '🏞️', key: 'park', label: 'go to the park' },
+      { emoji: '🚜', key: 'farm', label: 'go to the farm' }
+    ];
+
+    const reasons = {
+      beach: { want: ['build a sandcastle', 'look at shells', 'go swimming'], notWant: ['build a sandcastle', 'look at shells', 'go swimming'] },
+      park: { want: ['fly a kite', 'have a barbecue', 'have a picnic', 'take photos', 'go camping'], notWant: ['fly a kite', 'have a barbecue', 'have a picnic', 'take photos', 'go camping'] },
+      farm: { want: ['feed animals', 'plant vegetables', 'pick fruit'], notWant: ['feed animals', 'plant vegetables', 'pick fruit'] }
+    };
+
+    const studentSlot = document.getElementById('student-slot');
+    const attitudeSlot = document.getElementById('attitude-slot');
+    const activitySlot = document.getElementById('activity-slot');
+    const reasonSlot = document.getElementById('reason-slot');
+    const questionEl = document.getElementById('question');
+    const answerEl = document.getElementById('answer');
+    const spinBtn = document.getElementById('spin-btn');
+    const speakQBtn = document.getElementById('speak-q');
+    const speakABtn = document.getElementById('speak-a');
+    const qaQInner = document.getElementById('qa-q-inner');
+    const qaQOverlay = document.getElementById('qa-q-overlay');
+    const qaAInner = document.getElementById('qa-a-inner');
+    const qaAOverlay = document.getElementById('qa-a-overlay');
+    let qaQLocked = true;
+    let qaALocked = true;
+
+    const emojiForReason = (r) => ({
+      'build a sandcastle': '🏰', 'look at shells': '🐚', 'go swimming': '🏊',
+      'fly a kite': '🪁', 'have a barbecue': '🍖', 'have a picnic': '🧺', 'take photos': '📷', 'go camping': '🏕️',
+      'feed animals': '🐮', 'plant vegetables': '🥬', 'pick fruit': '🍎'
+    }[r] || '❓');
+
+    function speak(text){ if(!text||!text.trim())return; const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=0.95; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+
+    function updateSpeakButtons(){ const qHas=questionEl.textContent&&questionEl.textContent.trim().length>0; const aHas=answerEl.textContent&&answerEl.textContent.trim().length>0; speakQBtn.disabled=!(qHas&&!qaQLocked); speakABtn.disabled=!(aHas&&!qaALocked); speakQBtn.classList.toggle('opacity-50',speakQBtn.disabled); speakABtn.classList.toggle('opacity-50',speakABtn.disabled); }
+
+    speakQBtn.addEventListener('click',()=>speak(questionEl.textContent)); speakABtn.addEventListener('click',()=>speak(answerEl.textContent));
+
+    function applyReveal(host){ const el=host.querySelector('.slot-content'); if(!el)return; el.classList.remove('slot-reveal'); void el.offsetWidth; el.classList.add('slot-reveal'); setTimeout(()=>el.classList.remove('slot-reveal'),450); }
+
+    function setPlaceholder(slotEl){ slotEl.innerHTML=`<div class='slot-content'><span class='slot-emoji'>?</span><span class='slot-label'>&nbsp;</span></div>`; }
+
+    function renderStudent(student){ studentSlot.innerHTML=`<div class='slot-content'><span class='slot-emoji'>${student.emoji}</span><span class='slot-label'>${student.name}</span></div>`; applyReveal(studentSlot); }
+    function renderAttitude(attitude){ attitudeSlot.innerHTML=`<div class='slot-content'><span class='slot-emoji'>${attitude.emoji}</span><span class='slot-label'>${attitude.text}</span></div>`; applyReveal(attitudeSlot); }
+    function renderActivity(attitude,activity){ const isNo=attitude.text==='No'; const prefix=isNo?'(not) ':''; const emojiHTML=isNo?`<div class='slot-emoji-pair'><span>${activity.emoji}</span><span>❌</span></div>`:`<span class='slot-emoji'>${activity.emoji}</span>`; activitySlot.innerHTML=`<div class='slot-content'>${emojiHTML}<span class='slot-label'>${prefix}${activity.label}</span></div>`; applyReveal(activitySlot); }
+    function renderReason(attitude,reason){ const isNo=attitude.text==='No'; const emoji=emojiForReason(reason); const emojiHTML=isNo?`<div class='slot-emoji-pair'><span>${emoji}</span><span>❌</span></div>`:`<span class='slot-emoji'>${emoji}</span>`; reasonSlot.innerHTML=`<div class='slot-content'>${emojiHTML}<span class='slot-label'>${isNo?'(not) ':''}${reason}</span></div>`; applyReveal(reasonSlot); }
+
+    function renderQA(student,attitude,activity,reason){ const baseActivity=activity.label; questionEl.textContent=`Does ${student.name} want to ${baseActivity}?`; const isNo=attitude.text==='No'; const pronoun=student.gender; answerEl.textContent=`${attitude.text}, ${student.name} ${isNo?"doesn't want to":'wants to'} ${baseActivity} because ${pronoun} ${isNo?"doesn't want to":'wants to'} ${reason}.`; updateSpeakButtons(); }
+
+    let isSpinning=false; function startSpin(){ if(isSpinning)return; isSpinning=true; spinBtn.disabled=true; spinBtn.textContent='Spinning...'; const reels=[studentSlot,attitudeSlot,activitySlot,reasonSlot]; reels.forEach(setPlaceholder); questionEl.textContent=''; answerEl.textContent=''; lockQ(); lockA(); reels.forEach(el=>el.classList.add('slot-reel')); const s=students[Math.floor(Math.random()*students.length)]; const a=attitudes[Math.floor(Math.random()*attitudes.length)]; const act=activities[Math.floor(Math.random()*activities.length)]; const pool=a.text==='Yes'?reasons[act.key].want:reasons[act.key].notWant; const r=pool[Math.floor(Math.random()*pool.length)]; const times=[800,1200,1700,2400]; setTimeout(()=>{reels[0].classList.remove('slot-reel');renderStudent(s);},times[0]); setTimeout(()=>{reels[1].classList.remove('slot-reel');renderAttitude(a);},times[1]); setTimeout(()=>{reels[2].classList.remove('slot-reel');renderActivity(a,act);},times[2]); setTimeout(()=>{reels[3].classList.remove('slot-reel');renderReason(a,r);renderQA(s,a,act,r);spinBtn.disabled=false;spinBtn.textContent='🎰 Start!';isSpinning=false;},times[3]); }
+
+    function lockQ(){ qaQLocked=true; qaQInner.classList.add('blurred'); qaQOverlay.classList.remove('hidden'); updateSpeakButtons(); }
+    function unlockQ(){ qaQLocked=false; qaQInner.classList.remove('blurred'); qaQOverlay.classList.add('hidden'); updateSpeakButtons(); }
+    function lockA(){ qaALocked=true; qaAInner.classList.add('blurred'); qaAOverlay.classList.remove('hidden'); updateSpeakButtons(); }
+    function unlockA(){ qaALocked=false; qaAInner.classList.remove('blurred'); qaAOverlay.classList.add('hidden'); updateSpeakButtons(); }
+
+    // Bind overlay clicks
+    qaQOverlay.addEventListener('click', unlockQ);
+    qaAOverlay.addEventListener('click', unlockA);
+
+    // Controls
+    spinBtn.addEventListener('click', startSpin);
+    document.addEventListener('keydown', (e)=>{ if(e.code==='Space'){ e.preventDefault(); startSpin(); }});
+
+    // Initial state
+    updateSpeakButtons();
+  </script>
+</body>
+</html>
