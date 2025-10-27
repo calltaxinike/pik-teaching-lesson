@@ -27,7 +27,7 @@
 <body class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 flex items-center justify-center p-4">
   <main class="w-full max-w-3xl text-center">
     <h1 class="text-4xl font-extrabold text-white mb-4 drop-shadow">🎰 Friends’ Choice! 🎰</h1>
-    <p class="text-indigo-100 mb-6">Press <kbd class="px-1.5 py-0.5 bg-white/20 rounded">Space</kbd> or click Start. A sentence will be built with <span class="font-semibold">because</span>.</p>
+    <p class="text-indigo-100 mb-6">Press <kbd class="px-1.5 py-0.5 bg-white/20 rounded">Space</kbd> or click Start. Use <span class="font-semibold">because</span> to answer the questions.</p>
 
     <section class="slot-machine bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-3xl p-6 md:p-8 mb-6 border-8 border-yellow-300 shadow-2xl">
       <div class="flex justify-center gap-3 md:gap-4 mb-5">
@@ -146,7 +146,7 @@
 
     function updateSpeakButtons(){ const qHas=questionEl.textContent&&questionEl.textContent.trim().length>0; const aHas=answerEl.textContent&&answerEl.textContent.trim().length>0; speakQBtn.disabled=!(qHas&&!qaQLocked); speakABtn.disabled=!(aHas&&!qaALocked); speakQBtn.classList.toggle('opacity-50',speakQBtn.disabled); speakABtn.classList.toggle('opacity-50',speakABtn.disabled); }
 
-    speakQBtn.addEventListener('click',()=>speak(questionEl.textContent)); speakABtn.addEventListener('click',()=>speak(answerEl.textContent));
+    speakQBtn.addEventListener('click',(e)=>{ e.stopPropagation(); speak(questionEl.textContent); }); speakABtn.addEventListener('click',(e)=>{ e.stopPropagation(); speak(answerEl.textContent); });
 
     function applyReveal(host){ const el=host.querySelector('.slot-content'); if(!el)return; el.classList.remove('slot-reveal'); void el.offsetWidth; el.classList.add('slot-reveal'); setTimeout(()=>el.classList.remove('slot-reveal'),450); }
 
@@ -166,9 +166,12 @@
     function lockA(){ qaALocked=true; qaAInner.classList.add('blurred'); qaAOverlay.classList.remove('hidden'); updateSpeakButtons(); }
     function unlockA(){ qaALocked=false; qaAInner.classList.remove('blurred'); qaAOverlay.classList.add('hidden'); updateSpeakButtons(); }
 
-    // Bind overlay clicks
+    // Bind overlay clicks + toggle back to blur on inner click
     qaQOverlay.addEventListener('click', unlockQ);
     qaAOverlay.addEventListener('click', unlockA);
+    // Click the revealed content to lock again (re-blur)
+    qaQInner.addEventListener('click', (e)=>{ if(!qaQLocked && !e.target.closest('button')) lockQ(); });
+    qaAInner.addEventListener('click', (e)=>{ if(!qaALocked && !e.target.closest('button')) lockA(); });
 
     // Controls
     spinBtn.addEventListener('click', startSpin);
